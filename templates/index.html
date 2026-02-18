@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiny TTS Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #result.show {
+            display: block;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Tiny TTS</h1>
+        <p class="subtitle">Text-to-Speech Web Interface</p>
+
+        <div class="info-box">
+            <p><strong>디바이스:</strong> {{ device }}</p>
+            <p><strong>모델:</strong> {{ model_name }}</p>
+        </div>
+
+        <form id="ttsForm">
+            <label for="language">언어 선택:</label>
+            <select id="language" name="language">
+                <option value="Matthijs/mms-tts-kor" selected>한국어 (Korean)</option>
+                <option value="facebook/mms-tts-eng">영어 (English)</option>
+                <option value="facebook/mms-tts-jpn">일본어 (Japanese)</option>
+                <option value="facebook/mms-tts-cmn">중국어 (Chinese)</option>
+                <option value="facebook/mms-tts-spa">스페인어 (Spanish)</option>
+                <option value="facebook/mms-tts-fra">프랑스어 (French)</option>
+            </select>
+
+            <label for="text">변환할 텍스트:</label>
+            <textarea id="text" name="text" placeholder="여기에 텍스트를 입력하세요..." maxlength="500" required></textarea>
+
+            <button type="submit" id="submitBtn">🎵 음성 생성</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <p>음성 생성 중... ⏳</p>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('ttsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const text = document.getElementById('text').value;
+            const language = document.getElementById('language').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text, language })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    result.innerHTML = '';
+                    const successMsg = document.createElement('p');
+                    successMsg.className = 'success';
+                    successMsg.textContent = '✅ 음성 생성 완료!';
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.autoplay = true;
+                    const source = document.createElement('source');
+                    source.src = '/download/' + encodeURIComponent(data.filename);
+                    source.type = 'audio/wav';
+                    audio.appendChild(source);
+                    result.appendChild(successMsg);
+                    result.appendChild(audio);
+                    result.classList.add('show');
+                } else {
+                    result.innerHTML = '';
+                    const errorMsg = document.createElement('p');
+                    errorMsg.className = 'error';
+                    errorMsg.textContent = '❌ 오류: ' + data.error;
+                    result.appendChild(errorMsg);
+                    result.classList.add('show');
+                }
+            } catch (error) {
+                result.innerHTML = '';
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'error';
+                errorMsg.textContent = '❌ 오류: ' + error.message;
+                result.appendChild(errorMsg);
+                result.classList.add('show');
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
