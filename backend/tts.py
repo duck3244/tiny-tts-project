@@ -61,8 +61,10 @@ def main():
         print(f"사용 가능한 VRAM: {info['vram_gb']} GB")
     if info["uroman"]:
         print("✅ uroman 초기화 완료")
+    elif info["needs_uroman"]:
+        print("⚠️ uroman 미설치 - 'pip install uroman' 필요 (한국어 처리 제한적)")
     else:
-        print("⚠️ uroman 없이 실행 (한국어 처리 제한적)")
+        print("ℹ️ 이 모델은 uroman 로마자 변환이 필요하지 않습니다")
     print("모델 로딩 완료!")
 
     print(f"\n텍스트 변환 중: '{args.text}'")

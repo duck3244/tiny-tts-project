@@ -28,8 +28,10 @@ class InteractiveTTS:
             print(f"VRAM: {info['vram_gb']} GB")
         if info["uroman"]:
             print("✅ uroman 초기화 완료")
-        else:
+        elif info["needs_uroman"]:
             print("⚠️ uroman 미설치 - 'pip install uroman' 실행 필요")
+        else:
+            print("ℹ️ 이 모델은 uroman 로마자 변환이 필요하지 않습니다")
 
         self.output_dir = "outputs"
         os.makedirs(self.output_dir, exist_ok=True)

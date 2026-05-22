@@ -29,8 +29,10 @@ def initialize_engine(model_name="Matthijs/mms-tts-kor"):
         print(f"GPU: {info['gpu_name']}")
     if info["uroman"]:
         print("✅ uroman 초기화 완료")
-    else:
+    elif info["needs_uroman"]:
         print("⚠️ uroman 미설치")
+    else:
+        print("ℹ️ 이 모델은 uroman 로마자 변환이 필요하지 않습니다")
     print("모델 로딩 완료!")
 
 
@@ -51,7 +53,10 @@ def generate():
     global engine
 
     try:
-        data = request.json
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': '잘못된 요청 형식입니다. (JSON 본문 필요)'})
+
         text = data.get('text', '')
         language = data.get('language', 'Matthijs/mms-tts-kor')
 

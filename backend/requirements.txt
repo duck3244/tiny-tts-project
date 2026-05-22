@@ -4,5 +4,8 @@ transformers>=4.33.0
 soundfile
 numpy
 scipy
-flask
 uroman
+
+# 웹 API (app.py)
+fastapi
+uvicorn[standard]

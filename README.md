@@ -1,334 +1,211 @@
-# Tiny TTS Project
+# 🎤 Tiny TTS Project
 
-Ubuntu 22.04 + RTX 4060 8GB 환경에서 사용하는 Text-to-Speech 프로젝트입니다.
+Meta MMS(Massively Multilingual Speech) 모델 기반의 다국어 Text-to-Speech 웹
+애플리케이션입니다. **FastAPI 백엔드 + Vue 3 SPA** 구조이며, 레거시 CLI 도구도
+함께 제공합니다.
 
-**기본 모델**: `Matthijs/mms-tts-kor` (한국어 TTS)
+> **기본 모델**: `Matthijs/mms-tts-kor` (한국어 TTS)
+> **대상 환경**: Ubuntu 22.04 + NVIDIA RTX 4060 8GB (CUDA), CPU 폴백 지원
 
-## 🚀 빠른 시작
+## 데모
 
-```bash
-# 1. 패키지 설치
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install transformers>=4.33.0 soundfile scipy flask uroman
+![Tiny TTS 웹 인터페이스](./demo.png)
 
-# 2. 기본 사용 (CLI)
-python tts.py "안녕하세요, 반갑습니다."
+브라우저에서 언어를 선택하고 텍스트를 입력하면 음성이 생성되며, 생성 이력에서
+바로 재생·다운로드할 수 있습니다.
 
-# 3. 웹 인터페이스
-python web_tts.py
-# 브라우저에서 http://localhost:5000 접속
-```
-## 🎯 RTX 4060 8GB 호환성
+## ✨ 기능
 
-✅ **완벽하게 동작 가능**
+- 🌐 **웹 인터페이스** — Vue 3 SPA, 텍스트 입력 → 즉시 음성 생성·재생
+- 🗣️ **다국어 지원** — 한국어 / 영어 / 스페인어 / 프랑스어 모델 전환
+- 📜 **생성 이력** — 세션 내 생성 결과 재생 및 다운로드
+- ⚡ **GPU 가속** — CUDA 자동 감지, 미지원 시 CPU 폴백
+- 🧰 **CLI 도구** — 단일 변환 / 대화형 모드 스크립트 제공
 
-- **모델 크기**: ~200-400MB (VITS 아키텍처)
-- **예상 VRAM 사용량**: 1-2GB
-- **RTX 4060 8GB**: 충분한 여유 공간 (6-7GB 남음)
-- **추론 속도**: 실시간보다 빠름
-
-## 시스템 요구사항
-
-- Ubuntu 22.04
-- NVIDIA RTX 4060 8GB (CUDA 지원)
-- Python 3.8 이상
-- CUDA Toolkit 11.8 이상 (GPU 사용 시)
-
-## 설치 방법
-
-### 1. Python 가상환경 생성 (권장)
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 2. 의존성 패키지 설치
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 3. PyTorch CUDA 버전 설치 (GPU 사용 시)
-
-```bash
-# CUDA 11.8용
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# 또는 CUDA 12.1용
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-### 4. uroman 설치 (한국어 처리 필수!)
-
-```bash
-pip install uroman
-```
-
-**중요**: `Matthijs/mms-tts-kor` 모델은 한국어를 로마자로 변환하기 위해 uroman이 필요합니다.
-
-## 사용 방법
-
-### 1. 기본 사용법 (단일 텍스트 변환)
-
-```bash
-python tts.py "안녕하세요, 반갑습니다."
-```
-
-출력 파일: `output.wav`
-
-### 2. 출력 파일명 지정
-
-```bash
-python tts.py "한국어 음성 변환 테스트입니다." -o greeting.wav
-```
-
-### 3. 다른 언어 모델 사용
-
-```bash
-# 영어 모델
-python tts.py "Hello, how are you?" --model facebook/mms-tts-eng
-
-# 일본어 모델
-python tts.py "こんにちは" --model facebook/mms-tts-jpn
-
-# 중국어 모델
-python tts.py "你好" --model facebook/mms-tts-cmn
-```
-
-### 4. 대화형 모드
-
-```bash
-python interactive_tts.py
-```
-
-대화형 모드에서는 텍스트를 입력하면 실시간으로 음성 파일이 생성됩니다.
-생성된 파일은 `outputs/` 디렉토리에 저장됩니다.
-
-### 5. 웹 인터페이스 모드 🌐
-
-```bash
-python web_tts.py
-```
-
-웹 브라우저에서 사용할 수 있는 인터페이스를 제공합니다.
-
-**접속 방법:**
-```
-http://localhost:5000
-```
-
-**기능:**
-- 브라우저에서 직접 텍스트 입력
-- 여러 언어 모델 간 쉬운 전환
-- 즉시 재생 가능한 오디오 플레이어
-- 다운로드 기능
-
-**포트 변경:**
-```bash
-python web_tts.py --port 8080
-```
-
-**다른 모델로 시작:**
-```bash
-python web_tts.py --model facebook/mms-tts-eng
-```
-
-**외부 접속 (같은 네트워크):**
-
-서버는 기본적으로 모든 네트워크 인터페이스에서 실행되므로, 같은 네트워크의 다른 기기에서도 접속 가능합니다:
-
-1. 서버 IP 확인:
-   ```bash
-   hostname -I
-   ```
-
-2. 다른 기기에서 접속:
-   ```
-   http://192.168.x.x:5000
-   ```
-
-### 6. CPU 모드 강제 사용
-
-```bash
-python tts.py "Test text" --cpu
-```
-
-## 지원 언어 모델
-
-Meta의 MMS (Massively Multilingual Speech) 모델을 사용합니다:
-
-- **한국어**: `Matthijs/mms-tts-kor` (기본값)
-- **영어**: `facebook/mms-tts-eng`
-- **일본어**: `facebook/mms-tts-jpn`
-- **중국어**: `facebook/mms-tts-cmn`
-- **스페인어**: `facebook/mms-tts-spa`
-- **프랑스어**: `facebook/mms-tts-fra`
-- **독일어**: `facebook/mms-tts-deu`
-
-전체 지원 언어 목록: https://huggingface.co/facebook/mms-tts
-
-## 파일 구조
+## 📂 프로젝트 구조
 
 ```
 tiny-tts-project/
-├── requirements.txt            # Python 패키지 의존성
-├── tts.py                      # 메인 TTS 스크립트 (CLI)
-├── interactive_tts.py          # 대화형 TTS 스크립트
-├── web_tts.py                  # 웹 인터페이스 TTS 스크립트
-├── README.md                   # 이 파일
-├── TROUBLESHOOTING.md          # 문제 해결 가이드
-├── RTX_4060_COMPATIBILITY.md   # RTX 4060 호환성 상세 분석
-└── outputs/                    # 생성된 음성 파일 저장 (자동 생성)
+├── backend/                    # FastAPI 백엔드 + TTS 엔진
+│   ├── app.py                  # FastAPI 앱 (REST API, 정적 서빙)
+│   ├── tts_engine.py           # TTSEngine — 모델 로딩·로마자 변환·합성
+│   ├── tts.py                  # [CLI] 단일 텍스트 → wav 변환
+│   ├── interactive_tts.py      # [CLI] 대화형 TTS
+│   ├── web_tts.py              # [레거시] 구버전 Flask 웹 (app.py로 대체됨)
+│   ├── requirements.txt        # Python 의존성
+│   └── outputs/                # 생성된 wav 저장 (최대 20개 유지)
+├── frontend/                   # Vue 3 SPA (Vite + Tailwind CSS)
+│   ├── src/
+│   │   ├── App.vue             # 루트 컴포넌트
+│   │   ├── api.js              # 백엔드 호출 래퍼
+│   │   └── components/         # TtsForm.vue / HistoryList.vue
+│   └── package.json
+├── docs/                       # 아키텍처·UML 문서
+│   ├── ARCHITECTURE.md
+│   └── UML.md
+├── demo.png
+└── README.md
 ```
 
-## GPU 메모리 사용량
+## 🚀 빠른 시작
 
-- 모델 로딩: 약 400-500 MB
-- 추론 시: 약 1-2 GB
-- RTX 4060 8GB에서 여유롭게 실행 가능
+### 사전 준비
 
-## 문제 해결
+- Python 3.8 이상
+- Node.js 18.18+ 또는 20 이상
+- (선택) NVIDIA GPU + CUDA Toolkit 11.8 이상
 
-### CUDA 오류 발생 시
+### 1. 백엔드 설정
 
 ```bash
-# CUDA 버전 확인
-nvidia-smi
+cd backend
 
-# PyTorch CUDA 확인
-python -c "import torch; print(torch.cuda.is_available())"
+# 가상환경 (권장)
+python3 -m venv venv && source venv/bin/activate
+
+# 의존성 설치
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# GPU 사용 시 PyTorch CUDA 버전 설치 (CUDA 11.8 예시)
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
-### 모델 다운로드 오류 시
+> **한국어 처리 안내**: `Matthijs/mms-tts-kor` 모델은 텍스트를 로마자로 변환하기
+> 위해 `uroman` 패키지가 필요합니다. `requirements.txt`에 포함되어 있습니다.
 
-모델은 처음 실행 시 자동으로 다운로드됩니다. 
-네트워크 문제가 있다면 Hugging Face 계정으로 로그인:
+### 2. 프론트엔드 설정
 
 ```bash
-pip install huggingface-hub
-huggingface-cli login
+cd frontend
+npm install
 ```
 
-### 메모리 부족 오류 시
+### 3. 개발 모드 실행
 
-CPU 모드로 전환:
+터미널 2개에서 각각 실행합니다.
 
 ```bash
-python tts.py "Your text" --cpu
+# 터미널 1 — 백엔드 (:8000)
+cd backend
+uvicorn app:app --reload --port 8000
+
+# 터미널 2 — 프론트엔드 (:5173)
+cd frontend
+npm run dev
 ```
 
-### 웹 인터페이스 문제 해결
+브라우저에서 **http://localhost:5173** 접속.
+Vite가 `/api` 요청을 `:8000`으로 프록시하므로 CORS 설정 없이 동작합니다.
 
-**포트가 이미 사용 중인 경우:**
+### 4. 운영 모드 실행
+
+프론트엔드를 빌드하면 백엔드가 정적 파일까지 단일 서버로 서빙합니다.
+
 ```bash
-# 다른 포트 사용
-python web_tts.py --port 8080
+# 프론트엔드 빌드 → frontend/dist/
+cd frontend && npm run build
+
+# 백엔드 단독 실행 (dist/ 자동 서빙)
+cd backend && python app.py
 ```
 
-**브라우저 연결 안 될 때:**
-```bash
-# 방화벽 포트 열기 (Ubuntu)
-sudo ufw allow 5000
+브라우저에서 **http://localhost:8000** 접속.
 
-# 서버 실행 확인
-ps aux | grep web_tts.py
-```
+## 🔌 API 명세
 
-**음성 생성 실패 시:**
-- 브라우저 개발자 도구(F12) → Console 탭 확인
-- 서버 터미널에서 오류 메시지 확인
-- uroman이 설치되어 있는지 확인: `pip list | grep uroman`
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET` | `/api/status` | 디바이스·모델 상태 및 지원 언어 목록 |
+| `POST` | `/api/generate` | 텍스트(1~500자) → wav 생성, `{ filename }` 반환 |
+| `GET` | `/api/audio/{filename}` | 생성된 wav 파일 반환 |
 
-### uroman 관련 오류
+지원 언어 모델:
 
-한국어 텍스트 처리 시 오류 발생:
+| 언어 | 모델 |
+|------|------|
+| 한국어 (기본) | `Matthijs/mms-tts-kor` |
+| 영어 | `facebook/mms-tts-eng` |
+| 스페인어 | `facebook/mms-tts-spa` |
+| 프랑스어 | `facebook/mms-tts-fra` |
 
-```bash
-# uroman 설치
-pip install uroman
+## 🧰 CLI 도구 (선택)
 
-# 설치 확인
-python -c "from uroman import Uroman; print('OK')"
-```
-
-더 자세한 문제 해결은 `TROUBLESHOOTING.md` 파일을 참고하세요.
-
-## 예제
-
-### 커맨드 라인 (CLI)
+웹 인터페이스 없이 터미널에서 직접 변환할 수 있습니다. `backend/` 디렉토리에서
+실행합니다.
 
 ```bash
-# 한국어 텍스트 변환
-python tts.py "안녕하세요. 텍스트 음성 변환 프로젝트입니다." -o welcome.wav
+cd backend
 
-# 긴 문장 변환
-python tts.py "인공지능 기술의 발전으로 음성 합성 기술이 크게 향상되었습니다." -o korean_test.wav
+# 단일 텍스트 변환 (기본 출력: output.wav)
+python tts.py "안녕하세요, 반갑습니다."
 
-# 대화형 모드로 여러 문장 변환
+# 출력 파일명 / 모델 지정
+python tts.py "Hello, how are you?" -o english.wav --model facebook/mms-tts-eng
+
+# CPU 모드 강제
+python tts.py "테스트" --cpu
+
+# 대화형 모드
 python interactive_tts.py
 ```
 
-### 웹 인터페이스
+## 🎯 RTX 4060 8GB 호환성
 
+✅ **여유롭게 동작합니다.**
+
+- 모델 크기: ~200-400MB (VITS 아키텍처)
+- 추론 시 VRAM 사용량: 약 1-2GB (8GB 중 6-7GB 여유)
+- 추론 속도: 실시간보다 빠름
+- 동시에 1개 모델만 메모리 상주하며, 모델 전환 시 이전 VRAM을 회수합니다.
+
+## 🛠️ 문제 해결
+
+**백엔드 연결 실패 (`백엔드에 연결할 수 없습니다`)**
+→ `uvicorn`이 `:8000`에서 실행 중인지 확인하세요.
+
+**CUDA 인식 안 됨**
 ```bash
-# 웹 서버 시작
-python web_tts.py
+nvidia-smi                                          # 드라이버 확인
+python -c "import torch; print(torch.cuda.is_available())"
+```
+→ `False`이면 CUDA 버전에 맞는 PyTorch를 재설치하세요.
 
-# 브라우저에서 http://localhost:5000 접속 후:
-# 1. 텍스트 입력: "안녕하세요, 반갑습니다."
-# 2. "🎵 음성 생성" 버튼 클릭
-# 3. 오디오 플레이어에서 즉시 재생
+**모델 다운로드 오류**
+→ 모델은 최초 실행 시 HuggingFace Hub에서 자동 다운로드됩니다.
+네트워크 문제 시 `huggingface-cli login`으로 로그인하세요.
+
+**메모리 부족**
+→ CLI는 `--cpu` 옵션으로 CPU 모드 전환이 가능합니다.
+
+**uroman 관련 오류 (한국어)**
+```bash
+pip install uroman
+python -c "from uroman import Uroman; print('OK')"
 ```
 
-### 다양한 언어 테스트
+## 📖 문서
 
-```bash
-# 영어
-python tts.py "Hello, how are you today?" --model facebook/mms-tts-eng -o english.wav
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — 시스템 아키텍처, 계층 구조, 처리 흐름
+- [`docs/UML.md`](./docs/UML.md) — 클래스·시퀀스·상태 다이어그램 (Mermaid)
 
-# 일본어
-python tts.py "こんにちは、元気ですか。" --model facebook/mms-tts-jpn -o japanese.wav
+## 📦 기술 스택
 
-# 중국어
-python tts.py "你好，很高兴见到你。" --model facebook/mms-tts-cmn -o chinese.wav
-```
+| 영역 | 기술 |
+|------|------|
+| 백엔드 | FastAPI, Uvicorn |
+| ML 런타임 | PyTorch, Transformers (VITS), CUDA |
+| 음성 모델 | Meta MMS-TTS |
+| 오디오 I/O | soundfile, scipy |
+| 텍스트 전처리 | uroman |
+| 프론트엔드 | Vue 3, Vite, Tailwind CSS |
 
-## 사용 팁
-
-### 웹 인터페이스 활용
-
-1. **여러 언어 실험**: 드롭다운에서 언어를 바꿔가며 같은 문장을 다른 언어로 변환
-2. **긴 텍스트**: 여러 문단도 한 번에 처리 가능
-3. **즉시 재생**: 생성된 오디오를 바로 들어볼 수 있어 반복 테스트에 유용
-
-### 백그라운드 실행 (서버)
-
-```bash
-# nohup으로 백그라운드 실행
-nohup python web_tts.py > tts.log 2>&1 &
-
-# 로그 확인
-tail -f tts.log
-
-# 프로세스 종료
-pkill -f web_tts.py
-```
-
-### GPU 사용률 모니터링
-
-```bash
-# 실시간 GPU 모니터링 (다른 터미널에서)
-watch -n 1 nvidia-smi
-```
-
-## 라이선스
+## 📄 라이선스
 
 이 프로젝트는 교육 및 개인 용도로 자유롭게 사용할 수 있습니다.
 사용된 모델(MMS-TTS)은 Meta AI의 라이선스를 따릅니다.
 
-## 참고 자료
+## 🔗 참고 자료
 
 - [MMS-TTS 모델](https://huggingface.co/facebook/mms-tts)
 - [Transformers 문서](https://huggingface.co/docs/transformers)

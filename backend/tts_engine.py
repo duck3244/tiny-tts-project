@@ -16,6 +16,13 @@ except ImportError:
 
 MAX_TEXT_LENGTH = 500
 
+# uroman 로마자 변환이 필요한 모델 (tokenizer.is_uroman 플래그가
+# 설정돼 있지 않은 체크포인트를 보완하기 위한 명시 목록)
+UROMAN_REQUIRED_MODELS = {
+    "Matthijs/mms-tts-kor",
+    "facebook/mms-tts-kor",
+}
+
 
 class TTSEngine:
     """TTS 음성 합성 엔진"""
@@ -32,13 +39,19 @@ class TTSEngine:
         self.model.to(self.device)
         self.sample_rate = self.model.config.sampling_rate
 
-        if UROMAN_AVAILABLE:
+        # 이 모델이 uroman 로마자 변환을 필요로 하는지 판단
+        # (tokenizer 플래그 우선, 누락 시 명시 목록으로 보완)
+        self.needs_uroman = bool(
+            getattr(self.tokenizer, "is_uroman", False)
+        ) or model_name in UROMAN_REQUIRED_MODELS
+
+        if UROMAN_AVAILABLE and self.needs_uroman:
             self.uroman = Uroman()
         else:
             self.uroman = None
 
     def romanize(self, text):
-        """한국어 텍스트를 로마자로 변환"""
+        """텍스트를 로마자로 변환 (필요한 모델에 한해 적용)"""
         if self.uroman:
             return self.uroman.romanize_string(text)
         return text
@@ -85,6 +98,7 @@ class TTSEngine:
             "model_name": self.model_name,
             "sample_rate": self.sample_rate,
             "uroman": self.uroman is not None,
+            "needs_uroman": self.needs_uroman,
         }
         if self.device == "cuda":
             info["gpu_name"] = torch.cuda.get_device_name(0)
